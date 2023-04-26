@@ -9,7 +9,10 @@ use structopt::StructOpt;
 #[derive(Debug, StructOpt)]
 struct Args {
     /// IP addresses to ping
-    #[structopt(value_delimiter = " ", default_value = "192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34")]
+    #[structopt(
+        value_delimiter = " ",
+        default_value = "192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
+    )]
     ip_addresses: Vec<String>,
 }
 
@@ -22,13 +25,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let mut tasks = Vec::new();
     let m = MultiProgress::new();
 
-    ip_addresses.into_iter()
+    ip_addresses
+        .into_iter()
         .filter_map(|s| s.parse::<IpAddr>().ok())
         .for_each(|ip| {
             let pb = m.add(ProgressBar::new(1));
-            pb.set_style(ProgressStyle::with_template("{spinner} {prefix} {wide_msg}")
-                .unwrap()
-                .tick_chars(TICK_CHARS));
+            pb.set_style(
+                ProgressStyle::with_template("{spinner} {prefix} {wide_msg}")
+                    .unwrap()
+                    .tick_chars(TICK_CHARS),
+            );
             pb.set_prefix(format!("{}:", ip));
 
             tasks.push(tokio::spawn(ping(client.clone(), ip, pb)));
@@ -54,12 +60,26 @@ async fn ping(client: Client, addr: IpAddr, pb: ProgressBar) {
 
         match pinger.ping(PingSequence(idx), &payload).await {
             Ok((IcmpPacket::V4(packet), dur)) => {
-                pb.set_style(ProgressStyle::with_template("{spinner} {prefix:.green} {wide_msg}").unwrap().tick_chars(TICK_CHARS));
-                pb.set_message(format!("{} bytes icmp_seq={} ttl={} time={:0.2?}", packet.get_size(), packet.get_sequence(), packet.get_ttl().unwrap_or(u8::MAX), dur));
+                pb.set_style(
+                    ProgressStyle::with_template("{spinner} {prefix:.green} {wide_msg}")
+                        .unwrap()
+                        .tick_chars(TICK_CHARS),
+                );
+                pb.set_message(format!(
+                    "{} bytes icmp_seq={} ttl={} time={:0.2?}",
+                    packet.get_size(),
+                    packet.get_sequence(),
+                    packet.get_ttl().unwrap_or(u8::MAX),
+                    dur
+                ));
                 pb.inc(1);
             }
             Err(e) => {
-                pb.set_style(ProgressStyle::with_template("{spinner} {prefix:.red} {wide_msg}").unwrap().tick_chars(TICK_CHARS));
+                pb.set_style(
+                    ProgressStyle::with_template("{spinner} {prefix:.red} {wide_msg}")
+                        .unwrap()
+                        .tick_chars(TICK_CHARS),
+                );
                 pb.set_message(format!("{}", e));
                 pb.inc(1);
             }
