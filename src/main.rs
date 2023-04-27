@@ -31,11 +31,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .for_each(|ip| {
             let pb = m.add(ProgressBar::new(1));
             pb.set_style(
-                ProgressStyle::with_template("{spinner} {prefix} {wide_msg}")
+                ProgressStyle::with_template("{spinner:.bold} {prefix}: {wide_msg}")
                     .unwrap()
                     .tick_chars(TICK_CHARS),
             );
-            pb.set_prefix(format!("{}:", ip));
+            pb.set_prefix(format!("{}", ip));
 
             tasks.push(tokio::spawn(ping(client.clone(), ip, pb)));
         });
@@ -61,7 +61,7 @@ async fn ping(client: Client, addr: IpAddr, pb: ProgressBar) {
         match pinger.ping(PingSequence(idx), &payload).await {
             Ok((IcmpPacket::V4(packet), dur)) => {
                 pb.set_style(
-                    ProgressStyle::with_template("{spinner} {prefix:.green} {wide_msg}")
+                    ProgressStyle::with_template("{spinner:.bold} {prefix:.green}: {wide_msg}")
                         .unwrap()
                         .tick_chars(TICK_CHARS),
                 );
@@ -76,7 +76,7 @@ async fn ping(client: Client, addr: IpAddr, pb: ProgressBar) {
             }
             Err(e) => {
                 pb.set_style(
-                    ProgressStyle::with_template("{spinner} {prefix:.red} {wide_msg}")
+                    ProgressStyle::with_template("{spinner:.bold} {prefix:.red}: {wide_msg}")
                         .unwrap()
                         .tick_chars(TICK_CHARS),
                 );
