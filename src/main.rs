@@ -11,7 +11,7 @@ struct Args {
     /// IP addresses to ping
     #[structopt(
         value_delimiter = " ",
-        default_value = "192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
+        default_value = "192.168.0.10 192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
     )]
     ip_addresses: Vec<String>,
 }
