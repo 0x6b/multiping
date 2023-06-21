@@ -4,13 +4,13 @@ use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use surge_ping::{Client, Config, IcmpPacket, PingIdentifier, PingSequence};
 use tokio::time;
 
-use structopt::StructOpt;
+use clap::Parser;
 
-#[derive(Debug, StructOpt)]
+#[derive(Debug, Parser)]
 struct Args {
     /// IP addresses to ping
-    #[structopt(
-        value_delimiter = " ",
+    #[arg(
+        value_delimiter = ' ',
         default_value = "192.168.0.10 192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
     )]
     ip_addresses: Vec<String>,
@@ -20,7 +20,7 @@ static TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let Args { ip_addresses } = Args::from_args();
+    let Args { ip_addresses } = Args::parse();
     let client = Client::new(&Config::default())?;
     let mut tasks = Vec::new();
     let m = MultiProgress::new();
