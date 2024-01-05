@@ -7,6 +7,7 @@ use tokio::time;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+#[clap(about, version)]
 struct Args {
     /// IP addresses to ping
     #[arg(
