@@ -19,7 +19,7 @@ $ cargo uninstall multiping
 ## Usage
 
 ```console
-$ multiping <space separated IP addresses>
+$ multiping <space separated IP addresses or host names>
 ```
 
 ## LICENSE
