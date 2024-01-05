@@ -1,10 +1,10 @@
 use std::{error::Error, net::IpAddr, time::Duration};
 
+use clap::Parser;
+use dns_lookup::lookup_host;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use surge_ping::{Client, Config, IcmpPacket, PingIdentifier, PingSequence};
 use tokio::time;
-
-use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[clap(about, version)]
