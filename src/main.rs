@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     .unwrap()
                     .tick_chars(TICK_CHARS),
             );
-            pb.set_prefix(format!("{}", ip));
+            pb.set_prefix(format!("{ip}"));
 
             tasks.push(tokio::spawn(ping(client.clone(), ip, pb)));
         });
@@ -93,7 +93,7 @@ async fn ping(client: Client, addr: IpAddr, pb: ProgressBar) {
                         .unwrap()
                         .tick_chars(TICK_CHARS),
                 );
-                pb.set_message(format!("{}", e));
+                pb.set_message(format!("{e}"));
                 pb.inc(1);
             }
             _ => {}
