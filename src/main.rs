@@ -9,26 +9,38 @@ use clap::Parser;
 #[derive(Debug, Parser)]
 #[clap(about, version)]
 struct Args {
-    /// IP addresses to ping
+    /// Ping targets
     #[arg(
         value_delimiter = ' ',
-        default_value = "192.168.0.10 192.168.0.30 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
+        default_value = "192.168.0.10 turingpi.local 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
     )]
-    ip_addresses: Vec<String>,
+    targets: Vec<String>,
 }
 
 static TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let Args { ip_addresses } = Args::parse();
+    let Args { targets } = Args::parse();
     let client = Client::new(&Config::default())?;
     let mut tasks = Vec::new();
     let m = MultiProgress::new();
 
-    ip_addresses
+    targets
         .into_iter()
-        .filter_map(|s| s.parse::<IpAddr>().ok())
+        .filter_map(|s| {
+            if let Ok(ip) = s.parse::<IpAddr>() {
+                Some(ip)
+            } else if let Ok(host) = lookup_host(&s) {
+                host.into_iter()
+                    .filter(|addr| addr.is_ipv4())
+                    .collect::<Vec<_>>()
+                    .first()
+                    .cloned()
+            } else {
+                None
+            }
+        })
         .for_each(|ip| {
             let pb = m.add(ProgressBar::new(1));
             pb.set_style(

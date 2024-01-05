@@ -8,6 +8,7 @@ description = "Send ping to multiple hosts simultaneously for LAN monitoring."
 
 [dependencies]
 clap = { version = "4.3.5", features = ["derive"] }
+dns-lookup = "2.0.4"
 indicatif = "0.17.3"
 surge-ping = "0.8.0"
 tokio = { version = "1.28.0", default-features = false, features = ["rt", "rt-multi-thread", "macros", "time"] }
