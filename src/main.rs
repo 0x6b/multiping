@@ -17,7 +17,7 @@ struct Args {
     targets: Vec<String>,
 }
 
-static TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
+const TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
