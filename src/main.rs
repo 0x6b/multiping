@@ -4,7 +4,7 @@ use clap::Parser;
 use dns_lookup::lookup_host;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use surge_ping::{Client, Config, IcmpPacket, PingIdentifier, PingSequence};
-use tokio::time;
+use tokio::{spawn, time};
 
 #[derive(Debug, Parser)]
 #[clap(about, version)]
@@ -15,13 +15,22 @@ struct Args {
         default_value = "192.168.0.10 turingpi.local 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
     )]
     targets: Vec<String>,
+
+    /// ping interval in seconds
+    #[arg(short, long, default_value = "1")]
+    interval: f64,
+
+    /// ping timeout in seconds
+    #[arg(short, long, default_value = "1")]
+    timeout: f64,
 }
 
 const TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let Args { targets } = Args::parse();
+    let Args { targets, interval, timeout } = Args::parse();
+
     let client = Client::new(&Config::default())?;
     let mut tasks = Vec::new();
     let m = MultiProgress::new();
@@ -50,7 +59,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             );
             pb.set_prefix(format!("{ip:15}"));
 
-            tasks.push(tokio::spawn(ping(client.clone(), ip, pb)));
+            tasks.push(spawn(ping(client.clone(), ip, interval, timeout, pb)));
         });
 
     for task in tasks {
@@ -60,13 +69,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn ping(client: Client, addr: IpAddr, pb: ProgressBar) {
+async fn ping(client: Client, addr: IpAddr, interval: f64, timeout: f64, pb: ProgressBar) {
     let payload = [0; 56];
     let mut pinger = client.pinger(addr, PingIdentifier(0)).await;
-    let duration = Duration::from_millis(1000);
-    pinger.timeout(duration);
-
-    let mut interval = time::interval(duration);
+    pinger.timeout(Duration::from_millis((timeout * 1000.0) as u64));
+    let mut interval = time::interval(Duration::from_millis((interval * 1000.0) as u64));
 
     for idx in 0.. {
         interval.tick().await;
