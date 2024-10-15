@@ -1,4 +1,4 @@
-use std::{error::Error, net::IpAddr, time::Duration};
+use std::{error::Error, net::IpAddr, sync::Arc, time::Duration};
 
 use clap::Parser;
 use dns_lookup::lookup_host;
@@ -31,7 +31,7 @@ const TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
 async fn main() -> Result<(), Box<dyn Error>> {
     let Args { targets, interval, timeout } = Args::parse();
 
-    let client = Client::new(&Config::default())?;
+    let client = Arc::new(Client::new(&Config::default())?);
     let mut tasks = Vec::new();
     let m = MultiProgress::new();
 
@@ -69,7 +69,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn ping(client: Client, addr: IpAddr, interval: f64, timeout: f64, pb: ProgressBar) {
+async fn ping(client: Arc<Client>, addr: IpAddr, interval: f64, timeout: f64, pb: ProgressBar) {
     let payload = [0; 56];
     let mut pinger = client.pinger(addr, PingIdentifier(0)).await;
     pinger.timeout(Duration::from_millis((timeout * 1000.0) as u64));
