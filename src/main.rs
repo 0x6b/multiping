@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
                     .unwrap()
                     .tick_chars(TICK_CHARS),
             );
-            pb.set_prefix(format!("{ip}"));
+            pb.set_prefix(format!("{ip:15}"));
 
             tasks.push(tokio::spawn(ping(client.clone(), ip, pb)));
         });
