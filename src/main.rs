@@ -1,64 +1,14 @@
-use std::{
-    collections::BTreeMap,
-    error::Error,
-    net::IpAddr,
-    sync::{Arc, LazyLock},
-    time::Duration,
-};
+mod args;
+mod progress_style_map;
+
+use std::{error::Error, net::IpAddr, sync::Arc, time::Duration};
 
 use clap::Parser;
 use dns_lookup::lookup_host;
-use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar};
 use surge_ping::{Client, Config, IcmpPacket, PingIdentifier, PingSequence};
-use tokio::{spawn, time};
 
-#[derive(Debug, Parser)]
-#[clap(about, version)]
-struct Args {
-    /// ping targets
-    #[arg(
-        value_delimiter = ' ',
-        default_value = "192.168.0.10 turingpi.local 192.168.0.31 192.168.0.32 192.168.0.33 192.168.0.34"
-    )]
-    targets: Vec<String>,
-
-    /// ping interval in seconds
-    #[arg(short, long, default_value = "1")]
-    interval: f64,
-
-    /// ping timeout in seconds
-    #[arg(short, long, default_value = "1")]
-    timeout: f64,
-}
-
-const TICK_CHARS: &str = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏";
-
-struct ProgressStyleMap {
-    inner: BTreeMap<&'static str, ProgressStyle>,
-}
-
-impl ProgressStyleMap {
-    fn get(&self, key: &str) -> ProgressStyle {
-        self.inner.get(key).unwrap().clone()
-    }
-}
-
-static PROGRESS_STYLE_MAP: LazyLock<ProgressStyleMap> = LazyLock::new(|| {
-    let mut inner = BTreeMap::new();
-    inner.insert(
-        "default",
-        ProgressStyle::with_template("{spinner:.bold} {prefix:.green}: {wide_msg}")
-            .unwrap()
-            .tick_chars(TICK_CHARS),
-    );
-    inner.insert(
-        "error",
-        ProgressStyle::with_template("{spinner:.bold} {prefix:.red}: {wide_msg}")
-            .unwrap()
-            .tick_chars(TICK_CHARS),
-    );
-    ProgressStyleMap { inner }
-});
+use crate::{args::Args, progress_style_map::PROGRESS_STYLE_MAP as styles};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
@@ -85,9 +35,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
         })
         .for_each(|ip| {
             let pb = m.add(ProgressBar::new(1));
-            pb.set_style(PROGRESS_STYLE_MAP.get("default"));
+            pb.set_style(styles.get("default"));
             pb.set_prefix(format!("{ip:15}"));
-            tasks.push(spawn(ping(client.clone(), ip, interval, timeout, pb)));
+            tasks.push(tokio::spawn(ping(client.clone(), ip, interval, timeout, pb)));
         });
 
     for task in tasks {
@@ -101,14 +51,14 @@ async fn ping(client: Arc<Client>, addr: IpAddr, interval: f64, timeout: f64, pb
     let payload = [0; 56];
     let mut pinger = client.pinger(addr, PingIdentifier(0)).await;
     pinger.timeout(Duration::from_millis((timeout * 1000.0) as u64));
-    let mut interval = time::interval(Duration::from_millis((interval * 1000.0) as u64));
+    let mut interval = tokio::time::interval(Duration::from_millis((interval * 1000.0) as u64));
 
     for idx in 0.. {
         interval.tick().await;
 
         match pinger.ping(PingSequence(idx), &payload).await {
             Ok((IcmpPacket::V4(packet), dur)) => {
-                pb.set_style(PROGRESS_STYLE_MAP.get("default"));
+                pb.set_style(styles.get("default"));
                 pb.set_message(format!(
                     "{} bytes icmp_seq={} ttl={} time={dur:0.2?}",
                     packet.get_size(),
@@ -118,7 +68,7 @@ async fn ping(client: Arc<Client>, addr: IpAddr, interval: f64, timeout: f64, pb
                 pb.inc(1);
             }
             Err(e) => {
-                pb.set_style(PROGRESS_STYLE_MAP.get("error"));
+                pb.set_style(styles.get("error"));
                 pb.set_message(format!("{e}"));
                 pb.inc(1);
             }
