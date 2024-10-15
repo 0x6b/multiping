@@ -23,18 +23,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
         .filter_map(|s| {
             if let Ok(ip) = s.parse::<IpAddr>() {
                 Some(ip)
-            } else if let Ok(host) = lookup_host(&s) {
-                host.into_iter()
-                    .filter(|addr| addr.is_ipv4())
-                    .collect::<Vec<_>>()
-                    .first()
-                    .cloned()
+            } else if let Ok(hosts) = lookup_host(&s) {
+                hosts.into_iter().find(|addr| addr.is_ipv4()) // use the first only
             } else {
                 None
             }
         })
         .for_each(|ip| {
-            let pb = m.add(ProgressBar::new(1));
+            let pb = m.add(ProgressBar::new(0));
             pb.set_style(styles.get("default"));
             pb.set_prefix(format!("{ip:15}"));
             tasks.push(tokio::spawn(ping(client.clone(), ip, interval, timeout, pb)));
