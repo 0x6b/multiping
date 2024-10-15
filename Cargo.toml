@@ -1,11 +1,11 @@
 [package]
 name = "multiping"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 description = "Send ping to multiple hosts simultaneously for LAN monitoring."
 
 [dependencies]
-clap = { version = "4.5.20", features = ["derive"] }
+clap = { version = "4.5.20", features = ["derive", "wrap_help"] }
 dns-lookup = "2.0.4"
 indicatif = "0.17.8"
 surge-ping = "0.8.1"
