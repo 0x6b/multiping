@@ -19,7 +19,21 @@ $ cargo uninstall multiping
 ## Usage
 
 ```console
-$ multiping <space separated IP addresses or host names>
+$ multiping --help
+Send ping to multiple hosts simultaneously for LAN monitoring.
+
+Usage: multiping [OPTIONS] [TARGETS]...
+
+Arguments:
+  [TARGETS]...  Space seperated ping targets [default: "192.168.0.10
+                turingpi.local 192.168.0.31 192.168.0.32 192.168.0.33
+                192.168.0.34"]
+
+Options:
+  -i, --interval <INTERVAL>  Specify ping interval in seconds [default: 1]
+  -t, --timeout <TIMEOUT>    Specify ping timeout in seconds [default: 1]
+  -h, --help                 Print help
+  -V, --version              Print version
 ```
 
 ## LICENSE
